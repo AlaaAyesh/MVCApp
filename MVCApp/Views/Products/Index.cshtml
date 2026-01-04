@@ -1,0 +1,237 @@
+@model MVCApp.ViewModels.ProductSearchViewModel
+
+@{
+    ViewData["Title"] = "Products";
+}
+
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-3"><i class="fas fa-box-open me-2"></i>Products</h1>
+        </div>
+    </div>
+
+    <!-- Search and Filter Form -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" asp-action="Index" id="searchForm">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="searchTerm" class="form-label">Search</label>
+                                <input type="text" class="form-control" id="searchTerm" name="searchTerm" value="@Model.SearchTerm" placeholder="Search products...">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="categoryId" class="form-label">Category</label>
+                                <select class="form-select" id="categoryId" name="categoryId">
+                                    <option value="">All Categories</option>
+                                    @foreach (var category in Model.Categories)
+                                    {
+                                        if (Model.CategoryId == category.Id)
+                                        {
+                                            <option value="@category.Id" selected>@category.Name</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@category.Id">@category.Name</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="minPrice" class="form-label">Min Price</label>
+                                <input type="number" class="form-control" id="minPrice" name="minPrice" value="@Model.MinPrice" min="0" step="0.01">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="maxPrice" class="form-label">Max Price</label>
+                                <input type="number" class="form-control" id="maxPrice" name="maxPrice" value="@Model.MaxPrice" min="0" step="0.01">
+                            </div>
+                            <div class="col-md-1">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sort and Results Info -->
+    <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+                Showing @(((Model.Page - 1) * Model.PageSize) + 1) - @Math.Min(Model.Page * Model.PageSize, Model.TotalCount) of @Model.TotalCount products
+            </small>
+            <div>
+                <div class="d-flex justify-content-end align-items-center">
+                    <label for="sortOrder" class="form-label me-2 mb-0">Sort by:</label>
+                    <select class="form-select form-select-sm" id="sortOrder" name="sortOrder" style="width: auto;">
+                        @if (Model.SortOrder == MVCApp.ViewModels.SortOrder.NameAsc)
+                        {
+                            <option value="0" selected>Name A-Z</option>
+                        }
+                        else
+                        {
+                            <option value="0">Name A-Z</option>
+                        }
+                        @if (Model.SortOrder == MVCApp.ViewModels.SortOrder.NameDesc)
+                        {
+                            <option value="1" selected>Name Z-A</option>
+                        }
+                        else
+                        {
+                            <option value="1">Name Z-A</option>
+                        }
+                        @if (Model.SortOrder == MVCApp.ViewModels.SortOrder.PriceAsc)
+                        {
+                            <option value="2" selected>Price Low-High</option>
+                        }
+                        else
+                        {
+                            <option value="2">Price Low-High</option>
+                        }
+                        @if (Model.SortOrder == MVCApp.ViewModels.SortOrder.PriceDesc)
+                        {
+                            <option value="3" selected>Price High-Low</option>
+                        }
+                        else
+                        {
+                            <option value="3">Price High-Low</option>
+                        }
+                        @if (Model.SortOrder == MVCApp.ViewModels.SortOrder.Newest)
+                        {
+                            <option value="4" selected>Newest</option>
+                        }
+                        else
+                        {
+                            <option value="4">Newest</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div id="productGridContainer">
+        @await Html.PartialAsync("_ProductGrid", Model)
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Auto-submit form when sort order changes
+            $('#sortOrder').change(function() {
+                $('#searchForm').submit();
+            });
+
+            // Live AJAX filtering and search
+            var debounceTimer;
+            function fetchProducts() {
+                var data = {
+                    searchTerm: $('#searchTerm').val(),
+                    categoryId: $('#categoryId').val(),
+                    minPrice: $('#minPrice').val(),
+                    maxPrice: $('#maxPrice').val(),
+                    sortOrder: $('#sortOrder').val()
+                };
+                $('#productGridContainer').css('opacity', 0.5);
+                $.get('@Url.Action("Filter", "Products")', data, function(result) {
+                    $('#productGridContainer').html(result).css('opacity', 1);
+                });
+            }
+
+            $('#searchTerm').on('input', function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(fetchProducts, 300);
+            });
+            $('#categoryId, #minPrice, #maxPrice, #sortOrder').on('change', function() {
+                fetchProducts();
+            });
+
+            // Add to cart with AJAX
+            $(document).on('submit', '.add-to-cart-form', function(e) {
+                e.preventDefault();
+                var form = $(this);
+                var button = form.find('button[type="submit"]');
+                var originalText = button.html();
+                button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Adding...');
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    data: form.serialize(),
+                    success: function(response) {
+                        if (response.success) {
+                            if (response.cartCount > 0) {
+                                $('#cartCountBadge').text(response.cartCount).show();
+                            } else {
+                                $('#cartCountBadge').hide();
+                            }
+                            button.removeClass('btn-primary').addClass('btn-success')
+                                  .html('<i class="fas fa-check me-1"></i>Added!');
+                            setTimeout(function() {
+                                button.prop('disabled', false).removeClass('btn-success').addClass('btn-primary')
+                                      .html(originalText);
+                            }, 2000);
+                        }
+                    },
+                    error: function() {
+                        button.prop('disabled', false).html(originalText);
+                        alert('Error adding item to cart. Please try again.');
+                    }
+                });
+            });
+            
+            // Quick add to cart for product cards
+            $(document).on('click', '.add-to-cart-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                var productId = $(this).data('product-id');
+                var button = $(this);
+                var originalHtml = button.html();
+                
+                button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+                
+                $.ajax({
+                    url: 'https://localhost:7011/api/Cart/add',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ productId: productId, quantity: 1 }),
+                    success: function(response) {
+                        if (response.success) {
+                            // Fetch updated cart count
+                            $.get('https://localhost:7011/api/Cart', function(cart) {
+                                var count = 0;
+                                if (cart && cart.items) {
+                                    count = cart.items.reduce(function(sum, item) { return sum + item.quantity; }, 0);
+                                }
+                                $('#cartCountBadge').text(count).show();
+                            });
+                            showToast('Product added to cart successfully!', 'success');
+                            setTimeout(function() {
+                                button.prop('disabled', false).html(originalHtml);
+                            }, 1000);
+                        }
+                    },
+                    error: function() {
+                        button.prop('disabled', false).html(originalHtml);
+                        showToast('Error adding product to cart. Please try again.', 'danger');
+                    }
+                });
+            });
+            
+            // Product card hover effects
+            $(document).on('mouseenter', '.product-card', function() {
+                $(this).addClass('shadow-lg').css('transform', 'translateY(-5px)');
+            }).on('mouseleave', '.product-card', function() {
+                $(this).removeClass('shadow-lg').css('transform', 'translateY(0)');
+            });
+        });
+    </script>
+} 

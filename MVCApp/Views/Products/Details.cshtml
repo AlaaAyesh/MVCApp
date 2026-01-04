@@ -1,0 +1,303 @@
+@model MVCApp.ViewModels.ProductViewModel
+
+@{
+    ViewData["Title"] = Model.Name;
+    var relatedProducts = ViewBag.RelatedProducts as List<MVCApp.ViewModels.ProductViewModel> ?? new List<MVCApp.ViewModels.ProductViewModel>();
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex flex-column flex-md-row align-items-stretch g-0" style="min-height: 480px;">
+                <div class="col-md-6 d-flex align-items-stretch">
+                    <div class="product-image-container bg-white rounded-4 shadow-sm p-4 d-flex align-items-center justify-content-center w-100 h-100" style="min-height:400px;">
+                        @if (!string.IsNullOrEmpty(Model.imageUrl))
+                        {
+                            <img src="@Model.imageUrl" class="img-fluid rounded-4 border product-main-image" alt="@Model.Name" style="max-height:360px; object-fit:contain; background:#f8fafd; cursor:pointer;" loading="lazy" data-bs-toggle="modal" data-bs-target="#imageModal">
+                        }
+                        else
+                        {
+                            <div class="bg-light rounded-4 d-flex align-items-center justify-content-center w-100 h-100" style="height: 360px; width:100%;">
+                                <i class="fas fa-image fa-5x text-muted"></i>
+                            </div>
+                        }
+                        @if (Model.IsOnSale)
+                        {
+                            <div class="position-absolute top-0 start-0 m-3">
+                                <span class="badge bg-danger fs-6 px-3 py-2">SALE</span>
+                            </div>
+                        }
+                        @if (Model.IsFeatured)
+                        {
+                            <div class="position-absolute top-0 end-0 m-3">
+                                <span class="badge bg-warning text-dark fs-6 px-3 py-2">
+                                    <i class="fas fa-star me-1"></i>Featured
+                                </span>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="col-md-6 d-flex align-items-stretch">
+                    <div class="bg-white rounded-4 shadow-sm p-4 w-100 h-100 d-flex flex-column justify-content-between" style="min-height:400px;">
+                        <h1 class="display-5 fw-bold mb-3">@Model.Name</h1>
+                        <div class="mb-3">
+                            <span class="badge bg-secondary me-2">@Model.CategoryName</span>
+                            @if (Model.IsFeatured)
+                            {
+                                <span class="badge bg-warning text-dark me-2">Featured</span>
+                            }
+                            @if (Model.IsOnSale)
+                            {
+                                <span class="badge bg-danger">SALE</span>
+                            }
+                            @if (Model.Stock == 0)
+                            {
+                                <span class="badge bg-dark">Out of Stock</span>
+                            }
+                        </div>
+                        <div class="mb-4">
+                            @if (Model.IsOnSale)
+                            {
+                                <span class="text-decoration-line-through text-muted fs-5 me-2">$@Model.Price.ToString("F2")</span>
+                                <span class="display-4 text-primary fw-bold">$@Model.DisplayPrice.ToString("F2")</span>
+                            }
+                            else
+                            {
+                                <span class="display-4 text-primary fw-bold">$@Model.DisplayPrice.ToString("F2")</span>
+                            }
+                        </div>
+                        <div class="mb-4">
+                            <p class="text-muted mb-0 fs-5">@Model.Description</p>
+                        </div>
+                        <div class="row mb-4">
+                            <div class="col-6">
+                                <small class="text-muted d-block">SKU</small>
+                                <strong>@Model.SKU</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Stock</small>
+                                <strong class="@(Model.Stock > 0 ? "text-success" : "text-danger")">
+                                    @(Model.Stock > 0 ? $"{Model.Stock} in stock" : "Out of stock")
+                                </strong>
+                            </div>
+                        </div>
+                        @if (Model.Stock > 0)
+                        {
+                            <form asp-action="AddToCart" method="post" class="add-to-cart-form mt-auto">
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-md-4">
+                                        <label for="quantity" class="form-label">Quantity</label>
+                                        <input type="number" class="form-control" id="quantity" name="quantity" value="1" min="1" max="@Model.Stock">
+                                    </div>
+                                    <div class="col-md-8">
+                                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                                            Add to Cart
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning mt-auto" role="alert">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                This product is currently out of stock.
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Related Products Section -->
+@if (relatedProducts.Any())
+{
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12">
+                <h3 class="h4 mb-4">
+                    <i class="fas fa-thumbs-up me-2"></i>You might also like
+                </h3>
+                <div class="row g-4">
+                    @foreach (var relatedProduct in relatedProducts)
+                    {
+                        <div class="col-lg-3 col-md-4 col-sm-6">
+                            <div class="card h-100 border-0 shadow-sm rounded-4 product-card">
+                                <div class="card-img-top position-relative" style="height: 200px; overflow: hidden;">
+                                    @if (!string.IsNullOrEmpty(relatedProduct.imageUrl))
+                                    {
+                                        <img src="@relatedProduct.imageUrl" class="w-100 h-100 object-fit-cover" alt="@relatedProduct.Name" loading="lazy">
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-light d-flex align-items-center justify-content-center h-100">
+                                            <i class="fas fa-image fa-3x text-muted"></i>
+                                        </div>
+                                    }
+                                    @if (relatedProduct.IsOnSale)
+                                    {
+                                        <div class="position-absolute top-0 start-0 m-2">
+                                            <span class="badge bg-danger">SALE</span>
+                                        </div>
+                                    }
+                                    @if (relatedProduct.IsFeatured)
+                                    {
+                                        <div class="position-absolute top-0 end-0 m-2">
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-star"></i>
+                                            </span>
+                                        </div>
+                                    }
+                                    <div class="position-absolute bottom-0 end-0 m-2">
+                                        <button class="btn btn-primary btn-sm rounded-circle add-to-cart-btn" data-product-id="@relatedProduct.Id">
+                                            <i class="fas fa-cart-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body d-flex flex-column p-3">
+                                    <h6 class="card-title fw-bold mb-1 text-truncate">@relatedProduct.Name</h6>
+                                    <p class="card-text text-muted small mb-2">@relatedProduct.CategoryName</p>
+                                    <div class="mt-auto d-flex justify-content-between align-items-center">
+                                        @if (relatedProduct.IsOnSale)
+                                        {
+                                            <div>
+                                                <span class="text-decoration-line-through text-muted small">$@relatedProduct.Price.ToString("F2")</span>
+                                                <span class="text-primary fw-bold ms-2">$@relatedProduct.DisplayPrice.ToString("F2")</span>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-primary fw-bold">$@relatedProduct.DisplayPrice.ToString("F2")</span>
+                                        }
+                                        <a href="@Url.Action("Details", "Products", new { id = relatedProduct.Id })" class="btn btn-outline-primary btn-sm">
+                                            View
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">@Model.Name</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                @if (!string.IsNullOrEmpty(Model.imageUrl))
+                {
+                    <img src="@Model.imageUrl" class="img-fluid rounded" alt="@Model.Name">
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Add to cart with AJAX
+            $('.add-to-cart-form').on('submit', function(e) {
+                e.preventDefault();
+                
+                var form = $(this);
+                var button = form.find('button[type="submit"]');
+                var originalText = button.html();
+                
+                button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Adding...');
+                
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    data: form.serialize(),
+                    success: function(response) {
+                        if (response.success) {
+                            // Update cart count in navbar
+                            $('.badge').text(response.cartCount);
+                            
+                            // Show success toast
+                            showToast('Product added to cart successfully!', 'success');
+                            
+                            // Reset button
+                            setTimeout(function() {
+                                button.prop('disabled', false).html(originalText);
+                            }, 1000);
+                        }
+                    },
+                    error: function() {
+                        button.prop('disabled', false).html(originalText);
+                        showToast('Error adding product to cart. Please try again.', 'danger');
+                    }
+                });
+            });
+            
+            // Quick add to cart for related products
+            $('.add-to-cart-btn').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                var productId = $(this).data('product-id');
+                var button = $(this);
+                var originalHtml = button.html();
+                
+                button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+                
+                $.ajax({
+                    url: '@Url.Action("AddToCart", "Products")',
+                    method: 'POST',
+                    data: { productId: productId, quantity: 1 },
+                    success: function(response) {
+                        if (response.success) {
+                            // Update cart count in navbar
+                            $('.badge').text(response.cartCount);
+                            
+                            // Show success toast
+                            showToast('Product added to cart successfully!', 'success');
+                            
+                            // Reset button
+                            setTimeout(function() {
+                                button.prop('disabled', false).html(originalHtml);
+                            }, 1000);
+                        }
+                    },
+                    error: function() {
+                        button.prop('disabled', false).html(originalHtml);
+                        showToast('Error adding product to cart. Please try again.', 'danger');
+                    }
+                });
+            });
+            
+            // Quantity validation
+            $('#quantity').on('change', function() {
+                var value = parseInt($(this).val());
+                var max = parseInt($(this).attr('max'));
+                
+                if (value < 1) {
+                    $(this).val(1);
+                } else if (value > max) {
+                    $(this).val(max);
+                }
+            });
+            
+            // Product card hover effects
+            $('.product-card').hover(
+                function() {
+                    $(this).addClass('shadow-lg').css('transform', 'translateY(-5px)');
+                },
+                function() {
+                    $(this).removeClass('shadow-lg').css('transform', 'translateY(0)');
+                }
+            );
+        });
+    </script>
+} 

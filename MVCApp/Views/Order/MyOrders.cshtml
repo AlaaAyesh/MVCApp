@@ -1,0 +1,169 @@
+@model List<MVCApp.ViewModels.OrderViewModel>
+
+@{
+    ViewData["Title"] = "My Orders";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h2 mb-3">
+            <i class="fas fa-list me-2"></i>My Orders
+        </h1>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <div class="row">
+        @foreach (var order in Model)
+        {
+            <div class="col-12 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-receipt me-2"></i>Order #@order.OrderNumber
+                                </h5>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <span class="badge bg-@(order.Status switch {
+                                    MVCApp.Models.OrderStatus.Pending => "warning",
+                                    MVCApp.Models.OrderStatus.Processing => "info", 
+                                    MVCApp.Models.OrderStatus.Shipped => "primary",
+                                    MVCApp.Models.OrderStatus.Delivered => "success",
+                                    MVCApp.Models.OrderStatus.Cancelled => "danger",
+                                    MVCApp.Models.OrderStatus.Refunded => "secondary",
+                                    _ => "secondary"
+                                }) fs-6">@order.StatusDisplay</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="row mb-3">
+                                    <div class="col-sm-6">
+                                        <small class="text-muted d-block">Order Date</small>
+                                        <strong>@order.CreatedAt.ToString("MMM dd, yyyy 'at' h:mm tt")</strong>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <small class="text-muted d-block">Total Amount</small>
+                                        <strong class="text-primary">$@order.TotalAmount.ToString("F2")</strong>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-sm-6">
+                                        <small class="text-muted d-block">Shipping Address</small>
+                                        <strong>@order.ShippingFullName</strong><br>
+                                        <small class="text-muted">
+                                            @order.ShippingAddress<br>
+                                            @order.ShippingCity, @order.ShippingState @order.ShippingZipCode<br>
+                                            @order.ShippingCountry
+                                        </small>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <small class="text-muted d-block">Contact</small>
+                                        <strong>@order.ShippingEmail</strong><br>
+                                        <small class="text-muted">@order.ShippingPhone</small>
+                                    </div>
+                                </div>
+                                
+                                @if (order.OrderItems.Any())
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-borderless">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Product</th>
+                                                    <th class="text-center">Qty</th>
+                                                    <th class="text-end">Price</th>
+                                                    <th class="text-end">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var item in order.OrderItems)
+                                                {
+                                                    <tr>
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                @if (!string.IsNullOrEmpty(item.imageUrl))
+                                                                {
+                                                                    <img src="@item.imageUrl" class="me-3" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;" alt="@item.ProductName">
+                                                                }
+                                                                else
+                                                                {
+                                                                    <div class="me-3 bg-light d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 4px;">
+                                                                        <i class="fas fa-image text-muted"></i>
+                                                                    </div>
+                                                                }
+                                                                <div>
+                                                                    <strong>@item.ProductName</strong>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td class="text-center">@item.Quantity</td>
+                                                        <td class="text-end">$@item.UnitPrice.ToString("F2")</td>
+                                                        <td class="text-end">$@item.TotalPrice.ToString("F2")</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light border-0">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Order Summary</h6>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Subtotal:</span>
+                                            <span>$@(order.TotalAmount - order.TaxAmount - order.ShippingAmount).ToString("F2")</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Tax:</span>
+                                            <span>$@order.TaxAmount.ToString("F2")</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-3">
+                                            <span>Shipping:</span>
+                                            <span>$@order.ShippingAmount.ToString("F2")</span>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between mb-3">
+                                            <strong>Total:</strong>
+                                            <strong class="text-primary">$@order.TotalAmount.ToString("F2")</strong>
+                                        </div>
+                                        
+                                        <div class="d-grid gap-2">
+                                            <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-outline-primary btn-sm">
+                                                View Details
+                                            </a>
+                                            @if (order.Status == MVCApp.Models.OrderStatus.Delivered)
+                                            {
+                                                <button class="btn btn-outline-success btn-sm">
+                                                    <i class="fas fa-star me-1"></i>Leave Review
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="text-center py-5">
+        <i class="fas fa-shopping-bag fa-4x text-muted mb-3"></i>
+        <h3>No Orders Yet</h3>
+        <p class="text-muted">You haven't placed any orders yet. Start shopping to see your order history here.</p>
+        <a asp-controller="Products" asp-action="Index" class="btn btn-primary">
+            <i class="fas fa-shopping-bag me-2"></i>Start Shopping
+        </a>
+    </div>
+} 

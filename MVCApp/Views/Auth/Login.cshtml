@@ -1,0 +1,67 @@
+@{
+    ViewData["Title"] = "Login";
+}
+
+<style>
+    html[data-bs-theme="dark"] .auth-card {
+        background: #23272f !important;
+        color: #f8f9fa !important;
+        border-color: #343a40 !important;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.25) !important;
+    }
+    html[data-bs-theme="dark"] .auth-card .form-control {
+        background: #23272f;
+        color: #f8f9fa;
+        border-color: #495057;
+    }
+    html[data-bs-theme="dark"] .auth-card .form-control:focus {
+        background: #23272f;
+        color: #f8f9fa;
+        border-color: #6c63ff;
+        box-shadow: 0 0 0 0.2rem rgba(108,99,255,.25);
+    }
+    html[data-bs-theme="dark"] .auth-card .btn-primary {
+        background: #6c63ff;
+        border-color: #6c63ff;
+    }
+    html[data-bs-theme="dark"] .auth-card .btn-primary:hover {
+        background: #5a55ea;
+        border-color: #5a55ea;
+    }
+    html[data-bs-theme="dark"] .auth-card .alert-danger {
+        background: #3a2323;
+        color: #ffb3b3;
+        border-color: #ffb3b3;
+    }
+    .auth-card {
+        box-shadow: 0 8px 32px rgba(0,0,0,0.12) !important;
+    }
+</style>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm auth-card bg-white">
+                <div class="card-body">
+                    <h2 class="mb-4 text-center">Login</h2>
+                    <form asp-action="Login" method="post" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" value="@(Context.Request.Method == "POST" ? Context.Request.Form["email"] : "")" required autofocus />
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Login</button>
+                    </form>
+                    <div class="text-center mt-3">
+                        <span>Don't have an account?</span>
+                        <a asp-action="Register" class="ms-1">Register</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

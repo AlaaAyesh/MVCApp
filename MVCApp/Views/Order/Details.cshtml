@@ -1,0 +1,268 @@
+@model MVCApp.ViewModels.OrderViewModel
+
+@{
+    ViewData["Title"] = $"Order #{Model.OrderNumber}";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Order" asp-action="MyOrders">My Orders</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Order #@Model.OrderNumber</li>
+            </ol>
+        </nav>
+        
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h2 mb-0">
+                <i class="fas fa-receipt me-2"></i>Order #@Model.OrderNumber
+            </h1>
+            <span class="badge bg-@(Model.Status switch {
+                MVCApp.Models.OrderStatus.Pending => "warning",
+                MVCApp.Models.OrderStatus.Processing => "info", 
+                MVCApp.Models.OrderStatus.Shipped => "primary",
+                MVCApp.Models.OrderStatus.Delivered => "success",
+                MVCApp.Models.OrderStatus.Cancelled => "danger",
+                MVCApp.Models.OrderStatus.Refunded => "secondary",
+                _ => "secondary"
+            }) fs-5">@Model.StatusDisplay</span>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Order Items -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="fas fa-shopping-bag me-2"></i>Order Items
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Product</th>
+                                <th class="text-center">Quantity</th>
+                                <th class="text-end">Unit Price</th>
+                                <th class="text-end pe-4">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.OrderItems)
+                            {
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            @if (!string.IsNullOrEmpty(item.imageUrl))
+                                            {
+                                                <img src="@item.imageUrl" class="me-3" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;" alt="@item.ProductName">
+                                            }
+                                            else
+                                            {
+                                                <div class="me-3 bg-light d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; border-radius: 8px;">
+                                                    <i class="fas fa-image text-muted"></i>
+                                                </div>
+                                            }
+                                            <div>
+                                                <strong>@item.ProductName</strong>
+                                                <br>
+                                                <small class="text-muted">SKU: @item.ProductId</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-secondary">@item.Quantity</span>
+                                    </td>
+                                    <td class="text-end">$@item.UnitPrice.ToString("F2")</td>
+                                    <td class="text-end pe-4 fw-bold">$@item.TotalPrice.ToString("F2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shipping Information -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="fas fa-shipping-fast me-2"></i>Shipping Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Shipping Address</h6>
+                        <div class="mb-3">
+                            <strong>@Model.ShippingFullName</strong><br>
+                            @Model.ShippingAddress<br>
+                            @Model.ShippingCity, @Model.ShippingState @Model.ShippingZipCode<br>
+                            @Model.ShippingCountry
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Contact Information</h6>
+                        <div class="mb-3">
+                            <strong>Email:</strong> @Model.ShippingEmail<br>
+                            <strong>Phone:</strong> @Model.ShippingPhone
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.Notes))
+                        {
+                            <h6 class="text-muted mb-2">Order Notes</h6>
+                            <p class="text-muted mb-0">@Model.Notes</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Order Summary -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="fas fa-calculator me-2"></i>Order Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Subtotal:</span>
+                    <span>$@(Model.TotalAmount - Model.TaxAmount - Model.ShippingAmount).ToString("F2")</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Tax (8%):</span>
+                    <span>$@Model.TaxAmount.ToString("F2")</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span>Shipping:</span>
+                    <span>$@Model.ShippingAmount.ToString("F2")</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between mb-3">
+                    <strong>Total:</strong>
+                    <strong class="text-primary fs-5">$@Model.TotalAmount.ToString("F2")</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Timeline -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>Order Timeline
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-success"></div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">Order Placed</h6>
+                            <small class="text-muted">@Model.CreatedAt.ToString("MMM dd, yyyy 'at' h:mm tt")</small>
+                        </div>
+                    </div>
+                    
+                    @if (Model.Status == MVCApp.Models.OrderStatus.Processing || Model.Status == MVCApp.Models.OrderStatus.Shipped || Model.Status == MVCApp.Models.OrderStatus.Delivered)
+                    {
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-info"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">Processing</h6>
+                                <small class="text-muted">Order is being prepared</small>
+                            </div>
+                        </div>
+                    }
+                    
+                    @if (Model.Status == MVCApp.Models.OrderStatus.Shipped || Model.Status == MVCApp.Models.OrderStatus.Delivered)
+                    {
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">Shipped</h6>
+                                <small class="text-muted">@(Model.ShippedAt?.ToString("MMM dd, yyyy 'at' h:mm tt") ?? "Order has been shipped")</small>
+                            </div>
+                        </div>
+                    }
+                    
+                    @if (Model.Status == MVCApp.Models.OrderStatus.Delivered)
+                    {
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-success"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">Delivered</h6>
+                                <small class="text-muted">@(Model.DeliveredAt?.ToString("MMM dd, yyyy 'at' h:mm tt") ?? "Order has been delivered")</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a asp-controller="Order" asp-action="MyOrders" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Orders
+                    </a>
+                    @if (Model.Status == MVCApp.Models.OrderStatus.Delivered)
+                    {
+                        <button class="btn btn-outline-success">
+                            <i class="fas fa-star me-2"></i>Leave Review
+                        </button>
+                    }
+                    @if (Model.Status == MVCApp.Models.OrderStatus.Pending || Model.Status == MVCApp.Models.OrderStatus.Processing)
+                    {
+                        <button class="btn btn-outline-danger">
+                            <i class="fas fa-times me-2"></i>Cancel Order
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -22px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #e9ecef;
+}
+
+.timeline-content h6 {
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+</style> 
